@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import zipfile
 from typing import Any
 
 import streamlit as st
@@ -18,6 +19,9 @@ else:
 
 
 st.set_page_config(page_title="Magic Write", page_icon="*", layout="wide")
+
+MAX_VARIATIONS = 1000
+MAX_PREVIEWS_ON_PAGE = 60
 
 
 @st.cache_resource
@@ -58,8 +62,30 @@ def generate_magic_text(
     canvas_height: int,
     seed: int | None,
 ) -> dict[str, Any]:
+    if count <= 0:
+        return {
+            "magic_write": [],
+            "preview_image": [],
+            "meta": {
+                "canvas_width": canvas_width,
+                "canvas_height": canvas_height,
+                "count": 0,
+                "mode": "modern_composition",
+                "seed": seed,
+            },
+        }
     model = get_model(canvas_width, canvas_height)
     return model.generate(text, count=count, modern=True, seed=seed)
+
+
+def previews_to_zip(previews: list[dict[str, Any]]) -> bytes:
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for index, preview in enumerate(previews, start=1):
+            image_bytes = data_uri_to_bytes(preview.get("image", ""))
+            if image_bytes:
+                archive.writestr(f"magic_write_{index}.png", image_bytes)
+    return buffer.getvalue()
 
 
 st.title("Magic Write")
@@ -72,7 +98,7 @@ if MODEL_IMPORT_ERROR is not None:
 
 with st.sidebar:
     st.header("Settings")
-    count = st.slider("Variations", min_value=1, max_value=60, value=12)
+    count = st.number_input("Variations", min_value=0, max_value=MAX_VARIATIONS, value=12, step=1)
     canvas_width = st.number_input("Canvas width", min_value=160, max_value=2000, value=420, step=20)
     canvas_height = st.number_input("Canvas height", min_value=160, max_value=2000, value=420, step=20)
     use_seed = st.checkbox("Use fixed seed")
@@ -90,7 +116,7 @@ if generate:
             try:
                 result = generate_magic_text(
                     text=text,
-                    count=count,
+                    count=int(count),
                     canvas_width=int(canvas_width),
                     canvas_height=int(canvas_height),
                     seed=int(seed) if seed is not None else None,
@@ -112,8 +138,21 @@ if result:
     )
 
     previews = result.get("preview_image") or []
+    if previews:
+        st.download_button(
+            "Download all PNGs as ZIP",
+            data=previews_to_zip(previews),
+            file_name="magic_write_pngs.zip",
+            mime="application/zip",
+        )
+    if len(previews) > MAX_PREVIEWS_ON_PAGE:
+        st.info(
+            f"Generated {len(previews)} variations. Showing the first {MAX_PREVIEWS_ON_PAGE} "
+            "on this page to keep the app responsive. The JSON and ZIP downloads include all variations."
+        )
+
     columns = st.columns(3)
-    for index, preview in enumerate(previews, start=1):
+    for index, preview in enumerate(previews[:MAX_PREVIEWS_ON_PAGE], start=1):
         image_bytes = data_uri_to_bytes(preview.get("image", ""))
         with columns[(index - 1) % len(columns)]:
             st.image(preview_on_checkerboard(image_bytes), caption=f"Variation {index}", use_container_width=True)

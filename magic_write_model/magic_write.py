@@ -3217,10 +3217,30 @@ def generate_magic_write(
     text = str(text or "").strip()
     if not text:
         raise ValueError("text is required")
-    requested_count = int(_clamp_number(count, 1, 1, 10000)) if count is not None else None
+    requested_count = int(_clamp_number(count, 1, 0, 10000)) if count is not None else None
     canvas_width = int(_clamp_number(canvas_width, DEFAULT_CANVAS_WIDTH, 160, 2000))
     canvas_height = int(_clamp_number(canvas_height, DEFAULT_CANVAS_HEIGHT, 160, 2000))
     rng = _make_rng(seed)
+
+    if requested_count == 0:
+        return {
+            "magic_write": [],
+            "preview_image": [],
+            "meta": {
+                "model": model,
+                "canvas_width": canvas_width,
+                "canvas_height": canvas_height,
+                "count": 0,
+                "mode": "modern_composition" if modern else "all_google_fonts" if all_google_fonts else "all_fonts" if all_fonts or font_families else "style_presets",
+                "font_families": [],
+                "child_font_families": [] if modern else None,
+                "randomize_fonts": randomize_fonts,
+                "randomize_designs": randomize_designs,
+                "seed": seed,
+                "google_font_sort": google_font_sort if all_google_fonts else None,
+                "google_font_category": google_font_category if all_google_fonts else None,
+            },
+        }
 
     if modern:
         objects = _modern_composition_groups(
