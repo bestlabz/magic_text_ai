@@ -22,7 +22,12 @@ streamlit run streamlit_app.py
 2. Go to `https://share.streamlit.io`.
 3. Click `Create app`.
 4. Select your repository, branch, and `streamlit_app.py` as the main file.
-5. Click `Deploy`.
+5. Open `Advanced settings` and select Python `3.11` or `3.12`.
+6. Click `Deploy`.
+
+If an existing deployed app was created with a different Python version, delete
+that app and deploy it again with Python `3.11` or `3.12`. Streamlit Community
+Cloud does not change the Python version of an existing app during a reboot.
 
 Keep these files in the deployed repository:
 
