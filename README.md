@@ -1,0 +1,60 @@
+# Magic Write Model Export
+
+Version: `2026.08.05-modern-v1`
+
+This folder is a reusable Magic Write package for another Python project.
+
+## Install
+
+```bash
+pip install -r requirements.txt
+```
+
+## Run the Streamlit app locally
+
+```bash
+streamlit run streamlit_app.py
+```
+
+## Deploy on Streamlit Community Cloud
+
+1. Push this whole folder to a GitHub repository.
+2. Go to `https://share.streamlit.io`.
+3. Click `Create app`.
+4. Select your repository, branch, and `streamlit_app.py` as the main file.
+5. Click `Deploy`.
+
+Keep these files in the deployed repository:
+
+```text
+streamlit_app.py
+requirements.txt
+magic_write_model/
+```
+
+The `sparkle_transparent_previews/` folder and generated JSON files are sample
+outputs. They are not required for the app to run.
+
+## Use
+
+```python
+from magic_write_model import MagicWriteModel
+
+model = MagicWriteModel()
+result = model.generate("Sparkle", count=12, modern=True)
+```
+
+## CLI
+
+```bash
+python3 generate_magic_text.py "Sparkle" \
+  --count 12 \
+  -o sparkle_glow_check.json \
+  --save-preview-dir sparkle_glow_previews
+```
+
+The saved trained dataset is in:
+
+```text
+magic_write_model/magic_write_trained_dataset.json
+```

@@ -1,0 +1,13 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+.env
+.streamlit/secrets.toml
+
+magic_write_output.json
+magic_write_previews/
+sparkle_transparent_previews/
+sparkle_transparent_check.json
