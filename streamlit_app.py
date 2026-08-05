@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import base64
+import io
 import json
 from typing import Any
 
 import streamlit as st
+from PIL import Image, ImageDraw
 
 try:
     from magic_write_model import MagicWriteModel
@@ -29,6 +31,24 @@ def data_uri_to_bytes(uri: str) -> bytes:
     if "," not in uri:
         return b""
     return base64.b64decode(uri.split(",", 1)[1])
+
+
+def preview_on_checkerboard(image_bytes: bytes) -> bytes:
+    text_img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
+    pad = 28
+    tile = 16
+    width = max(text_img.width + pad * 2, 360)
+    height = max(text_img.height + pad * 2, 210)
+    bg = Image.new("RGBA", (width, height), "#F8FAFC")
+    draw = ImageDraw.Draw(bg)
+    for y in range(0, height, tile):
+        for x in range(0, width, tile):
+            if (x // tile + y // tile) % 2:
+                draw.rectangle((x, y, x + tile - 1, y + tile - 1), fill="#E5E7EB")
+    bg.alpha_composite(text_img, ((width - text_img.width) // 2, (height - text_img.height) // 2))
+    out = io.BytesIO()
+    bg.convert("RGB").save(out, format="PNG")
+    return out.getvalue()
 
 
 def generate_magic_text(
@@ -96,7 +116,7 @@ if result:
     for index, preview in enumerate(previews, start=1):
         image_bytes = data_uri_to_bytes(preview.get("image", ""))
         with columns[(index - 1) % len(columns)]:
-            st.image(image_bytes, caption=f"Variation {index}", use_container_width=True)
+            st.image(preview_on_checkerboard(image_bytes), caption=f"Variation {index}", use_container_width=True)
             st.download_button(
                 "Download PNG",
                 data=image_bytes,

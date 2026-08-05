@@ -77,6 +77,11 @@ PRIMARY_FONT_CACHE_DIR = FONT_CACHE_DIRS[0]
 GOOGLE_FONTS_CACHE_PATH = PRIMARY_FONT_CACHE_DIR / "google_fonts_families.json"
 MAC_FONT_DIR = Path("/System/Library/Fonts/Supplemental")
 MAC_CORE_FONT_DIR = Path("/System/Library/Fonts")
+LINUX_FONT_DIRS = [
+    Path("/usr/share/fonts/truetype/dejavu"),
+    Path("/usr/share/fonts/truetype/liberation2"),
+    Path("/usr/share/fonts/truetype/liberation"),
+]
 
 FONT_FILES = {
     "arial": "Arial.ttf",
@@ -1826,6 +1831,15 @@ def _system_font_path(family: str, bold: bool, allow_default: bool = True) -> Pa
                 MAC_CORE_FONT_DIR / "Helvetica.ttc",
             ]
         )
+    linux_sans = "DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"
+    linux_serif = "DejaVuSerif-Bold.ttf" if bold else "DejaVuSerif.ttf"
+    linux_mono = "DejaVuSansMono-Bold.ttf" if bold else "DejaVuSansMono.ttf"
+    if "mono" in lowered or "courier" in lowered:
+        candidates.extend(font_dir / linux_mono for font_dir in LINUX_FONT_DIRS)
+    elif "serif" in lowered or lowered in {"georgia", "times new roman", "times new roman bold"}:
+        candidates.extend(font_dir / linux_serif for font_dir in LINUX_FONT_DIRS)
+    if allow_default:
+        candidates.extend(font_dir / linux_sans for font_dir in LINUX_FONT_DIRS)
     return next((p for p in candidates if p.exists()), None)
 
 
@@ -2208,6 +2222,134 @@ def _modern_palette_value(palette: dict[str, str], mode: str) -> str:
     return _clean_hex(palette.get(mode), "") if mode else ""
 
 
+def _hex_luminance(hex_color: str) -> float:
+    color = _clean_hex(hex_color, "#000000").lstrip("#")
+    channels = [int(color[index:index + 2], 16) / 255 for index in (0, 2, 4)]
+    linear = [
+        value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
+        for value in channels
+    ]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _strengthen_transparent_text_contrast(children: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    adjusted = deepcopy(children)
+    for child in adjusted:
+        if not isinstance(child, dict) or child.get("type") != "Text":
+            continue
+        fill = _clean_hex(child.get("fill"), "#111111")
+        stroke = _clean_hex(child.get("stroke"), "")
+        stroke_width = float(child.get("strokeWidth") or 0)
+        shadow = _clean_hex(child.get("shadowColor"), "")
+        shadow_blur = float(child.get("shadowBlur") or 0)
+        has_edge = bool(stroke and stroke_width >= 0.8) or bool(shadow and shadow_blur >= 3)
+        if has_edge:
+            continue
+
+        luminance = _hex_luminance(fill)
+        if luminance < 0.28:
+            child["stroke"] = "#FFFFFF"
+            child["strokeWidth"] = max(stroke_width, 1.4)
+            child["shadowColor"] = "#FFFFFF"
+            child["shadowBlur"] = max(shadow_blur, 3.5)
+            child["shadowOffsetX"] = 0
+            child["shadowOffsetY"] = 0
+        elif luminance > 0.82:
+            child["stroke"] = "#1F2937"
+            child["strokeWidth"] = max(stroke_width, 0.9)
+            child["shadowColor"] = "#1F2937"
+            child["shadowBlur"] = max(shadow_blur, 1.2)
+            child["shadowOffsetX"] = max(float(child.get("shadowOffsetX") or 0), 1.0)
+            child["shadowOffsetY"] = max(float(child.get("shadowOffsetY") or 0), 1.4)
+    return adjusted
+
+
+def _composition_alpha_bbox(
+    children: list[dict[str, Any]],
+    canvas_width: int,
+    canvas_height: int,
+    scale: int = 2,
+) -> tuple[float, float, float, float] | None:
+    width = canvas_width * scale
+    height = canvas_height * scale
+    img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    ordered = [child for child in children if isinstance(child, dict)]
+    ordered.sort(key=lambda child: int(child.get("zIndex") or 0))
+    for child in ordered:
+        if child.get("type") == "Text":
+            _draw_text_object_on_layer(img, child, scale)
+    bbox = img.getchannel("A").getbbox()
+    if not bbox:
+        return None
+    return tuple(value / scale for value in bbox)  # type: ignore[return-value]
+
+
+def _scale_child_geometry(child: dict[str, Any], origin: tuple[float, float], factor: float) -> None:
+    ox, oy = origin
+    child["x"] = ox + (float(child.get("x") or 0) - ox) * factor
+    child["y"] = oy + (float(child.get("y") or 0) - oy) * factor
+    for key in ("width", "height", "fontSize", "strokeWidth", "shadowBlur", "letterSpacing"):
+        child[key] = float(child.get(key) or 0) * factor
+    for key in ("shadowOffsetX", "shadowOffsetY"):
+        child[key] = float(child.get(key) or 0) * factor
+
+
+def _shift_child_geometry(child: dict[str, Any], dx: float, dy: float) -> None:
+    child["x"] = float(child.get("x") or 0) + dx
+    child["y"] = float(child.get("y") or 0) + dy
+
+
+def _fit_composition_children_to_canvas(
+    children: list[dict[str, Any]],
+    canvas_width: int,
+    canvas_height: int,
+) -> list[dict[str, Any]]:
+    fitted = deepcopy(children)
+    bbox = _composition_alpha_bbox(fitted, canvas_width, canvas_height)
+    if not bbox:
+        return fitted
+
+    left, top, right, bottom = bbox
+    bbox_w = max(right - left, 1)
+    bbox_h = max(bottom - top, 1)
+    min_w = canvas_width * 0.62
+    min_h = canvas_height * 0.18
+    max_w = canvas_width * 0.88
+    max_h = canvas_height * 0.58
+
+    max_fit = min(max_w / bbox_w, max_h / bbox_h)
+    grow = max(min_w / bbox_w, min_h / bbox_h, 1.0)
+    factor = min(grow, max_fit, 1.9) if grow > 1.0 else min(max_fit, 1.0)
+    if factor > 1.01 or factor < 0.99:
+        origin = ((left + right) / 2, (top + bottom) / 2)
+        for child in fitted:
+            if isinstance(child, dict) and child.get("type") == "Text":
+                _scale_child_geometry(child, origin, factor)
+
+    bbox = _composition_alpha_bbox(fitted, canvas_width, canvas_height)
+    if not bbox:
+        return fitted
+    left, top, right, bottom = bbox
+    target_cx = canvas_width / 2
+    target_cy = canvas_height / 2
+    dx = target_cx - (left + right) / 2
+    dy = target_cy - (top + bottom) / 2
+    pad = canvas_width * 0.04
+    if left + dx < pad:
+        dx += pad - (left + dx)
+    if right + dx > canvas_width - pad:
+        dx -= (right + dx) - (canvas_width - pad)
+    if top + dy < pad:
+        dy += pad - (top + dy)
+    if bottom + dy > canvas_height - pad:
+        dy -= (bottom + dy) - (canvas_height - pad)
+    for child in fitted:
+        if isinstance(child, dict) and child.get("type") == "Text":
+            _shift_child_geometry(child, dx, dy)
+
+    return fitted
+
+
 def _modern_composition_signature(children: list[dict[str, Any]]) -> tuple[Any, ...]:
     parts: list[Any] = []
     for child in children:
@@ -2511,6 +2653,8 @@ def _modern_composition_variant(
         used_effects,
     )
     children = _tighten_composition_children(children, canvas_height)
+    children = _strengthen_transparent_text_contrast(children)
+    children = _fit_composition_children_to_canvas(children, canvas_width, canvas_height)
     group = _composition_group(str(template.get("name") or kind), kind, children, index + 1, canvas_width, canvas_height)
     group["magicWritePalette"] = palette_name
     group["magicWriteEffect"] = effect_name
