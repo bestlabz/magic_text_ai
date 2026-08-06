@@ -21,7 +21,6 @@ else:
 st.set_page_config(page_title="Magic Write", page_icon="*", layout="wide")
 
 MAX_VARIATIONS = 1000
-MAX_PREVIEWS_ON_PAGE = 60
 
 
 @st.cache_resource
@@ -37,6 +36,7 @@ def data_uri_to_bytes(uri: str) -> bytes:
     return base64.b64decode(uri.split(",", 1)[1])
 
 
+@st.cache_data(show_spinner=False)
 def preview_on_checkerboard(image_bytes: bytes) -> bytes:
     text_img = Image.open(io.BytesIO(image_bytes)).convert("RGBA")
     pad = 28
@@ -145,15 +145,13 @@ if result:
             file_name="magic_write_pngs.zip",
             mime="application/zip",
         )
-    if len(previews) > MAX_PREVIEWS_ON_PAGE:
-        st.info(
-            f"Generated {len(previews)} variations. Showing the first {MAX_PREVIEWS_ON_PAGE} "
-            "on this page to keep the app responsive. The JSON and ZIP downloads include all variations."
-        )
+    st.info(f"Generated {len(previews)} variations. Showing all generated previews below.")
 
     columns = st.columns(3)
-    for index, preview in enumerate(previews[:MAX_PREVIEWS_ON_PAGE], start=1):
+    for index, preview in enumerate(previews, start=1):
         image_bytes = data_uri_to_bytes(preview.get("image", ""))
+        if not image_bytes:
+            continue
         with columns[(index - 1) % len(columns)]:
             st.image(preview_on_checkerboard(image_bytes), caption=f"Variation {index}", use_container_width=True)
             st.download_button(
