@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Magic Write JSON and preview images with the exported model."""
+"""Generate Magic Write JSON and preview images with the local model."""
 
 from __future__ import annotations
 
@@ -15,7 +15,6 @@ def main() -> None:
     parser.add_argument("text", help='text to style, e.g. "Sparkle" or "Thank\\nYou"')
     parser.add_argument("--count", type=int, default=12)
     parser.add_argument("--seed", type=int)
-    parser.add_argument("--model", default=None, help="optional Ollama model name")
     parser.add_argument("--canvas-width", type=int, default=420)
     parser.add_argument("--canvas-height", type=int, default=420)
     parser.add_argument("-o", "--output", default="magic_write_output.json")
@@ -23,14 +22,10 @@ def main() -> None:
     parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
 
-    model_kwargs = {
-        "canvas_width": args.canvas_width,
-        "canvas_height": args.canvas_height,
-    }
-    if args.model:
-        model_kwargs["model"] = args.model
-
-    model = MagicWriteModel(**model_kwargs)
+    model = MagicWriteModel(
+        canvas_width=args.canvas_width,
+        canvas_height=args.canvas_height,
+    )
     result = model.generate(
         args.text.replace("\\n", "\n"),
         count=args.count,

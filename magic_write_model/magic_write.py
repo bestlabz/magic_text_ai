@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Magic Write text-style generator.
 
-Input text goes to Ollama for style suggestions. The suggestions are then
-sanitized into the Konva-compatible Text object shape used by the card editor,
-and each object is rendered into a small PNG data URI for preview_image.
+Input text is matched against a bundled local style dataset and rule-based
+style engine. The selected styles are sanitized into the Konva-compatible Text
+object shape used by the card editor, and each object is rendered into a small
+PNG data URI for preview_image.
 """
 
 from __future__ import annotations
@@ -53,8 +54,7 @@ _load_local_env()
 DEFAULT_CANVAS_WIDTH = 420
 DEFAULT_CANVAS_HEIGHT = 420
 DEFAULT_PREVIEW_SCALE = 3
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434/api/generate")
-OLLAMA_MODEL = os.environ.get("OLLAMA_TEXT_MODEL", os.environ.get("OLLAMA_MODEL", "llama3.1:latest"))
+LOCAL_MAGIC_WRITE_MODEL = "magic-write-local-rules-v1"
 GOOGLE_FONTS_API_URL = "https://www.googleapis.com/webfonts/v1/webfonts"
 GOOGLE_FONTS_API_KEY = os.environ.get("GOOGLE_FONTS_API_KEY", "")
 HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
@@ -71,7 +71,6 @@ except ImportError:
 
 FONT_CACHE_DIRS = [
     PROJECT_DIR / ".font_cache",
-    PROJECT_DIR.parent / "V1.3_Card_Generate_Ollama" / ".font_cache",
 ]
 PRIMARY_FONT_CACHE_DIR = FONT_CACHE_DIRS[0]
 GOOGLE_FONTS_CACHE_PATH = PRIMARY_FONT_CACHE_DIR / "google_fonts_families.json"
@@ -322,16 +321,17 @@ def save_magic_write_training_dataset(path: str | os.PathLike[str]) -> Path:
 
 
 class MagicWriteModel:
-    """Small reusable wrapper for separate projects."""
+    """Small reusable local wrapper for separate projects."""
 
     def __init__(
         self,
-        model: str = OLLAMA_MODEL,
+        model: str | None = None,
         timeout: int = 45,
         canvas_width: int = DEFAULT_CANVAS_WIDTH,
         canvas_height: int = DEFAULT_CANVAS_HEIGHT,
     ) -> None:
-        self.model = model
+        # model/timeout are accepted for backwards compatibility; generation is local.
+        self.model = LOCAL_MAGIC_WRITE_MODEL
         self.timeout = timeout
         self.canvas_width = canvas_width
         self.canvas_height = canvas_height
@@ -1620,122 +1620,77 @@ def _styles_for_font_families(font_families: list[str] | tuple[str, ...] | str |
     return styles
 
 
-def _extract_json(text: str) -> Any:
-    text = text.strip()
-    if not text:
-        raise ValueError("empty Ollama response")
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
+def _intent_terms(text: str, mood: str | None) -> list[str]:
+    raw = f"{text} {mood or ''}".lower()
+    terms = re.findall(r"[a-z0-9%]+", raw)
 
-    fenced = re.search(r"```(?:json)?\s*(.*?)```", text, re.S | re.I)
-    if fenced:
-        return json.loads(fenced.group(1))
-
-    start = min([i for i in (text.find("["), text.find("{")) if i >= 0], default=-1)
-    if start < 0:
-        raise ValueError("Ollama response did not contain JSON")
-    end = max(text.rfind("]"), text.rfind("}"))
-    if end <= start:
-        raise ValueError("Ollama response JSON was incomplete")
-    return json.loads(text[start : end + 1])
-
-
-def _ollama_generate(prompt: str, model: str, timeout: int) -> Any:
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "stream": False,
-        "format": "json",
-        "options": {"temperature": 0.75, "top_p": 0.9},
-    }
-    data = json.dumps(payload).encode("utf-8")
-    request = urllib.request.Request(
-        OLLAMA_URL,
-        data=data,
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            raw = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        detail = exc.read().decode("utf-8", "ignore").strip()
-        if detail:
-            raise RuntimeError(f"Ollama HTTP {exc.code}: {detail}") from exc
-        raise
-    return _extract_json(str(raw.get("response", "")))
+    intent_groups = [
+        (("birthday", "bday", "party", "celebrate", "celebration"), ["birthday", "happy", "marker", "pop", "script"]),
+        (("thank", "thanks", "grateful", "gratitude"), ["thank", "you", "clean", "serif", "script"]),
+        (("bride", "groom", "wedding", "engaged", "engagement", "love"), ["bride", "groom", "luxury", "rose", "script"]),
+        (("sale", "off", "discount", "%", "deal", "offer"), ["sale", "discount", "bold", "outline", "condensed"]),
+        (("open", "opening", "launch", "new"), ["open", "neon", "glow", "bold"]),
+        (("logo", "brand", "studio", "tattoo"), ["logo", "studio", "badge", "arc", "clean"]),
+        (("target", "roadmap", "quarter", "business", "report"), ["editorial", "mono", "label", "clean"]),
+        (("royal", "gold", "luxury", "premium"), ["royal", "gold", "luxury", "serif"]),
+        (("neon", "glow", "night"), ["neon", "glow", "outline"]),
+    ]
+    for needles, additions in intent_groups:
+        if any(needle in raw for needle in needles):
+            terms.extend(additions)
+    return terms
 
 
-def _prompt(text: str, count: int, mood: str | None) -> str:
-    preset_names = ", ".join(p["name"] for p in STYLE_PRESETS)
-    return f"""
-You generate decorative text styles for a card editor. Return only JSON.
-
-Create {count} different style objects for this exact text:
-{json.dumps(text)}
-
-Mood or event: {json.dumps(mood or "general celebration")}
-
-Each object must use this schema:
-{{
-  "name": "short_style_name",
-  "fontFamily": "Google or common font family",
-  "fontSize": 18-72,
-  "fontWeight": "normal|500|600|bold",
-  "fontStyle": "normal|italic",
-  "fill": "#RRGGBB",
-  "stroke": "#RRGGBB or empty string",
-  "strokeWidth": 0-5,
-  "textDecoration": "underline|line-through|empty string",
-  "shadowColor": "#RRGGBB or empty string",
-  "shadowBlur": 0-18,
-  "shadowOffsetX": -10 to 10,
-  "shadowOffsetY": -10 to 10,
-  "letterSpacing": -1 to 4,
-  "lineHeight": 0.85-1.35
-}}
-
-Prefer diverse Canva-like text effects similar to: {preset_names}.
-Every object must use a different color/design treatment. Do not repeat the same fill, stroke, shadow, decoration, and effect combination.
-Do not change the text. Do not add image URLs. Return:
-{{"styles": [ ... ]}}
-""".strip()
+def _style_search_text(style: dict[str, Any]) -> str:
+    return " ".join(
+        str(style.get(key, ""))
+        for key in ("name", "category", "fontFamily", "sample", "previewLayout", "textTransform")
+    ).lower()
 
 
-def _style_candidates(text: str, count: int, mood: str | None, model: str, timeout: int,
+def _local_style_library(text: str, mood: str | None, rng: random.Random,
+                         randomize: bool) -> list[dict[str, Any]]:
+    library = [deepcopy(style) for style in STYLE_PRESETS]
+    library.extend(deepcopy(style) for style in MODERN_MAGIC_WRITE_DATASET)
+    terms = [term for term in _intent_terms(text, mood) if len(term) >= 2]
+
+    scored: list[tuple[int, int, dict[str, Any]]] = []
+    for index, style in enumerate(library):
+        haystack = _style_search_text(style)
+        score = sum(3 if term in haystack else 0 for term in terms)
+        kind = _font_kind(str(style.get("fontFamily") or ""))
+        if kind in terms:
+            score += 2
+        scored.append((score, index, style))
+
+    if any(score for score, _, _ in scored):
+        scored.sort(key=lambda item: (-item[0], item[1]))
+        return [style for _, _, style in scored]
+
+    if randomize:
+        rng.shuffle(library)
+    return library
+
+
+def _style_candidates(text: str, count: int, mood: str | None,
                       randomize_fonts: bool = True,
                       randomize_designs: bool = True,
                       rng: random.Random | None = None) -> list[dict[str, Any]]:
     rng = rng or _make_rng()
-    curated = _canva_style_presets(
-        count,
-        randomize_fonts=randomize_fonts,
-        randomize_designs=randomize_designs,
-        rng=rng,
-    )
-    if count <= len(STYLE_PRESETS):
-        return curated
+    base_styles = _local_style_library(text, mood, rng, randomize_fonts)
+    used_fonts: set[str] = set()
+    used_designs: set[tuple[Any, ...]] = set()
+    styles: list[dict[str, Any]] = []
 
-    try:
-        data = _ollama_generate(_prompt(text, count - len(STYLE_PRESETS), mood), model=model, timeout=timeout)
-        styles = data.get("styles", data) if isinstance(data, dict) else data
-        if isinstance(styles, list) and styles:
-            extras = [s for s in styles if isinstance(s, dict)]
-            if randomize_fonts:
-                used_fonts = {str(style.get("fontFamily") or "").lower() for style in curated}
-                extras = [_randomize_style_font(style, rng, used_fonts) for style in extras]
-            if randomize_designs:
-                used_designs = {_design_signature(style) for style in curated}
-                extras = [
-                    _apply_random_design(style, rng, len(curated) + index, used_designs)
-                    for index, style in enumerate(extras)
-                ]
-            return (curated[:len(STYLE_PRESETS)] + extras + curated[len(STYLE_PRESETS):])[:count]
-    except (RuntimeError, urllib.error.URLError, TimeoutError, ValueError, json.JSONDecodeError, OSError) as exc:
-        print(f"warning: Ollama extra style generation failed, using curated Canva-style presets: {exc}", file=sys.stderr)
-    return curated
+    for index in range(count):
+        base = deepcopy(base_styles[index % len(base_styles)])
+        style = _variant_from_preset(base, index // len(base_styles))
+        if randomize_fonts:
+            style = _randomize_style_font(style, rng, used_fonts)
+        if randomize_designs:
+            style = _apply_random_design(style, rng, index, used_designs)
+        styles.append(style)
+    return styles
 
 
 def _font_cache_path(family: str, bold: bool, italic: bool = False) -> Path | None:
@@ -3198,7 +3153,7 @@ def generate_magic_write(
     text: str,
     count: int | None = 6,
     mood: str | None = None,
-    model: str = OLLAMA_MODEL,
+    model: str | None = LOCAL_MAGIC_WRITE_MODEL,
     timeout: int = 45,
     canvas_width: int = DEFAULT_CANVAS_WIDTH,
     canvas_height: int = DEFAULT_CANVAS_HEIGHT,
@@ -3220,6 +3175,7 @@ def generate_magic_write(
     requested_count = int(_clamp_number(count, 1, 0, 10000)) if count is not None else None
     canvas_width = int(_clamp_number(canvas_width, DEFAULT_CANVAS_WIDTH, 160, 2000))
     canvas_height = int(_clamp_number(canvas_height, DEFAULT_CANVAS_HEIGHT, 160, 2000))
+    model_name = LOCAL_MAGIC_WRITE_MODEL
     rng = _make_rng(seed)
 
     if requested_count == 0:
@@ -3227,7 +3183,7 @@ def generate_magic_write(
             "magic_write": [],
             "preview_image": [],
             "meta": {
-                "model": model,
+                "model": model_name,
                 "canvas_width": canvas_width,
                 "canvas_height": canvas_height,
                 "count": 0,
@@ -3278,8 +3234,6 @@ def generate_magic_write(
             text,
             count=requested_count or 6,
             mood=mood,
-            model=model,
-            timeout=timeout,
             randomize_fonts=randomize_fonts,
             randomize_designs=randomize_designs,
             rng=rng,
@@ -3297,7 +3251,7 @@ def generate_magic_write(
         "magic_write": objects,
         "preview_image": previews,
         "meta": {
-            "model": model,
+            "model": model_name,
             "canvas_width": canvas_width,
             "canvas_height": canvas_height,
             "count": len(objects),
