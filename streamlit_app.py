@@ -100,11 +100,15 @@ if MODEL_IMPORT_ERROR is not None:
 
 with st.sidebar:
     st.header("Settings")
-    count = st.number_input("Variations", min_value=0, max_value=MAX_VARIATIONS, value=12, step=1)
+    count = st.number_input("Variations", min_value=0, value=12, step=1)
+
+count_too_high = int(count) > MAX_VARIATIONS
+if count_too_high:
+    st.error(f"Maximum {MAX_VARIATIONS} variations allowed. Please enter {MAX_VARIATIONS} or less.")
 
 text = st.text_area("Text", value="Sparkle", height=100, placeholder="Type text to style")
 
-generate = st.button("Generate", type="primary", use_container_width=True)
+generate = st.button("Generate", type="primary", use_container_width=True, disabled=count_too_high)
 
 if generate:
     if not text.strip():
