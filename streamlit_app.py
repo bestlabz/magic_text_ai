@@ -21,6 +21,8 @@ else:
 st.set_page_config(page_title="Magic Write", page_icon="*", layout="wide")
 
 MAX_VARIATIONS = 1000
+DEFAULT_CANVAS_WIDTH = 420
+DEFAULT_CANVAS_HEIGHT = 420
 
 
 @st.cache_resource
@@ -99,10 +101,6 @@ if MODEL_IMPORT_ERROR is not None:
 with st.sidebar:
     st.header("Settings")
     count = st.number_input("Variations", min_value=0, max_value=MAX_VARIATIONS, value=12, step=1)
-    canvas_width = st.number_input("Canvas width", min_value=160, max_value=2000, value=420, step=20)
-    canvas_height = st.number_input("Canvas height", min_value=160, max_value=2000, value=420, step=20)
-    use_seed = st.checkbox("Use fixed seed")
-    seed = st.number_input("Seed", min_value=0, max_value=999999, value=123, step=1) if use_seed else None
 
 text = st.text_area("Text", value="Sparkle", height=100, placeholder="Type text to style")
 
@@ -117,9 +115,9 @@ if generate:
                 result = generate_magic_text(
                     text=text,
                     count=int(count),
-                    canvas_width=int(canvas_width),
-                    canvas_height=int(canvas_height),
-                    seed=int(seed) if seed is not None else None,
+                    canvas_width=DEFAULT_CANVAS_WIDTH,
+                    canvas_height=DEFAULT_CANVAS_HEIGHT,
+                    seed=None,
                 )
             except Exception as exc:
                 st.error("Generation failed.")
