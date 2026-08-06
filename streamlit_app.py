@@ -10,7 +10,7 @@ import streamlit as st
 from PIL import Image, ImageDraw
 
 try:
-    from magic_write_model import MagicWriteModel
+    from magic_write import MagicWriteModel
 except Exception as exc:  # pragma: no cover - shown in Streamlit Cloud logs/UI.
     MagicWriteModel = None
     MODEL_IMPORT_ERROR = exc
@@ -26,7 +26,7 @@ MAX_VARIATIONS = 1000
 @st.cache_resource
 def get_model(canvas_width: int, canvas_height: int) -> Any:
     if MagicWriteModel is None:
-        raise RuntimeError(f"Could not import magic_write_model: {MODEL_IMPORT_ERROR}")
+        raise RuntimeError(f"Could not import magic_write: {MODEL_IMPORT_ERROR}")
     return MagicWriteModel(canvas_width=canvas_width, canvas_height=canvas_height)
 
 
@@ -92,7 +92,7 @@ st.title("Magic Write")
 st.caption("Generate styled transparent text previews and export Konva-compatible JSON.")
 
 if MODEL_IMPORT_ERROR is not None:
-    st.error("The app could not load `magic_write_model`.")
+    st.error("The app could not load `magic_write`.")
     st.exception(MODEL_IMPORT_ERROR)
     st.stop()
 

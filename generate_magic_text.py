@@ -7,7 +7,7 @@ import argparse
 import json
 from pathlib import Path
 
-from magic_write_model import MagicWriteModel, save_preview_images
+from magic_write import MagicWriteModel, save_preview_images
 
 
 def main() -> None:

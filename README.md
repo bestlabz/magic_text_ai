@@ -2,7 +2,7 @@
 
 Version: `2026.08.05-modern-v1`
 
-This folder is a reusable Magic Write package for another Python project.
+This folder is a reusable Magic Write app and local generator.
 
 ## Install
 
@@ -34,16 +34,18 @@ Keep these files in the deployed repository:
 ```text
 streamlit_app.py
 requirements.txt
-magic_write_model/
+magic_write.py
+magic_write_trained_dataset.json
+.font_cache/
 ```
 
-The `sparkle_transparent_previews/` folder and generated JSON files are sample
-outputs. They are not required for the app to run.
+Generated preview folders and generated JSON files are sample outputs. They are
+not required for the app to run.
 
 ## Use
 
 ```python
-from magic_write_model import MagicWriteModel
+from magic_write import MagicWriteModel
 
 model = MagicWriteModel()
 result = model.generate("Sparkle", count=12, modern=True)
@@ -61,5 +63,5 @@ python3 generate_magic_text.py "Sparkle" \
 The saved trained dataset is in:
 
 ```text
-magic_write_model/magic_write_trained_dataset.json
+magic_write_trained_dataset.json
 ```
