@@ -2353,9 +2353,9 @@ def _modern_text_objects(
     requested = count or len(MODERN_TEXT_EXPORT_STYLES)
     objects: list[dict[str, Any]] = []
     used_signatures: set[tuple[Any, ...]] = set()
-    used_visual_families: set[tuple[Any, ...]] = set()
     candidate_index = 0
-    while len(objects) < requested and candidate_index < requested * 12 + 96:
+    max_candidates = max(requested * 40, requested + 256)
+    while len(objects) < requested and candidate_index < max_candidates:
         style = _modern_text_style_for_index(candidate_index)
         styled_text = _apply_text_transform(text, style.get("textTransform"))
         obj = _layer_text(
@@ -2373,11 +2373,7 @@ def _modern_text_objects(
         candidate_index += 1
         if signature in used_signatures:
             continue
-        visual_family = _modern_text_visual_family(obj)
-        if visual_family in used_visual_families:
-            continue
         used_signatures.add(signature)
-        used_visual_families.add(visual_family)
         objects.append(obj)
     return objects
 
