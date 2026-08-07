@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import io
 import json
+import uuid
 import zipfile
 from typing import Any
 
@@ -57,6 +58,88 @@ def preview_on_checkerboard(image_bytes: bytes) -> bytes:
     return out.getvalue()
 
 
+def clean_hex(value: Any, default: str = "") -> str:
+    if not isinstance(value, str):
+        return default
+    value = value.strip()
+    if not value:
+        return default
+    if not value.startswith("#"):
+        value = f"#{value}"
+    if len(value) == 7:
+        try:
+            int(value[1:], 16)
+        except ValueError:
+            return default
+        return value.upper()
+    return default
+
+
+def canva_text_element(text_obj: dict[str, Any], canvas_width: int, canvas_height: int) -> dict[str, Any]:
+    fill = clean_hex(text_obj.get("fill"), "#111111")
+    stroke = clean_hex(text_obj.get("stroke"), "")
+    shadow = clean_hex(text_obj.get("shadowColor"), "")
+    return {
+        "id": f"canva_text_{uuid.uuid4()}",
+        "type": "TEXT",
+        "text": str(text_obj.get("text") or ""),
+        "position": {"x": float(text_obj.get("x") or 0), "y": float(text_obj.get("y") or 0)},
+        "size": {"width": float(text_obj.get("width") or 0), "height": float(text_obj.get("height") or 0)},
+        "transform": {
+            "scaleX": float(text_obj.get("scaleX") or 1),
+            "scaleY": float(text_obj.get("scaleY") or 1),
+            "rotation": float(text_obj.get("rotation") or 0),
+            "opacity": float(text_obj.get("opacity") or 1),
+        },
+        "style": {
+            "fontFamily": str(text_obj.get("fontFamily") or "Arial"),
+            "fontSize": float(text_obj.get("fontSize") or 36),
+            "fontWeight": str(text_obj.get("fontWeight") or "normal"),
+            "fontStyle": str(text_obj.get("fontStyle") or "normal"),
+            "color": fill,
+            "textAlign": str(text_obj.get("textAlign") or text_obj.get("align") or "center"),
+            "letterSpacing": float(text_obj.get("letterSpacing") or 0),
+            "lineHeight": float(text_obj.get("lineHeight") or 1),
+            "textDecoration": str(text_obj.get("textDecoration") or ""),
+        },
+        "effects": {
+            "stroke": {"color": stroke, "width": float(text_obj.get("strokeWidth") or 0) if stroke else 0},
+            "shadow": {
+                "color": shadow,
+                "blur": float(text_obj.get("shadowBlur") or 0) if shadow else 0,
+                "offsetX": float(text_obj.get("shadowOffsetX") or 0) if shadow else 0,
+                "offsetY": float(text_obj.get("shadowOffsetY") or 0) if shadow else 0,
+            },
+        },
+        "layer": {
+            "zIndex": int(text_obj.get("zIndex") or 0),
+            "draggable": bool(text_obj.get("draggable", True)),
+            "visible": True,
+        },
+        "canvas": {"width": canvas_width, "height": canvas_height},
+        "source": {
+            "format": "konva",
+            "type": str(text_obj.get("type") or "Text"),
+            "id": str(text_obj.get("id") or ""),
+            "magicWriteRole": str(text_obj.get("magicWriteRole") or ""),
+        },
+    }
+
+
+def convert_result_format(result: dict[str, Any], output_type: str, canvas_width: int, canvas_height: int) -> dict[str, Any]:
+    converted = dict(result)
+    meta = dict(converted.get("meta") or {})
+    meta["output_format"] = output_type
+    converted["meta"] = meta
+    if output_type == "canva":
+        converted["magic_write"] = [
+            canva_text_element(obj, canvas_width, canvas_height)
+            for obj in converted.get("magic_write") or []
+            if isinstance(obj, dict)
+        ]
+    return converted
+
+
 def generate_magic_text(
     text: str,
     count: int,
@@ -79,7 +162,14 @@ def generate_magic_text(
             },
         }
     model = get_model(canvas_width, canvas_height)
-    return model.generate(text, count=count, modern=True, seed=seed, output_type=output_type)
+    try:
+        return model.generate(text, count=count, modern=True, seed=seed, output_type=output_type)
+    except TypeError as exc:
+        message = str(exc)
+        if "output_type" not in message and "output_format" not in message:
+            raise
+        result = model.generate(text, count=count, modern=True, seed=seed)
+        return convert_result_format(result, output_type, canvas_width, canvas_height)
 
 
 def previews_to_zip(previews: list[dict[str, Any]]) -> bytes:
