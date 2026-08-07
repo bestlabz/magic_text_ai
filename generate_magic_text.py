@@ -17,6 +17,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int)
     parser.add_argument("--canvas-width", type=int, default=420)
     parser.add_argument("--canvas-height", type=int, default=420)
+    parser.add_argument("--type", choices=("konva", "canva"), default="konva", help="JSON output type")
     parser.add_argument("-o", "--output", default="magic_write_output.json")
     parser.add_argument("--save-preview-dir", default="magic_write_previews")
     parser.add_argument("--quiet", action="store_true")
@@ -31,6 +32,7 @@ def main() -> None:
         count=args.count,
         modern=True,
         seed=args.seed,
+        output_type=args.type,
     )
 
     output = Path(args.output)

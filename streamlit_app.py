@@ -63,6 +63,7 @@ def generate_magic_text(
     canvas_width: int,
     canvas_height: int,
     seed: int | None,
+    output_type: str,
 ) -> dict[str, Any]:
     if count <= 0:
         return {
@@ -74,10 +75,11 @@ def generate_magic_text(
                 "count": 0,
                 "mode": "modern_composition",
                 "seed": seed,
+                "output_format": output_type,
             },
         }
     model = get_model(canvas_width, canvas_height)
-    return model.generate(text, count=count, modern=True, seed=seed)
+    return model.generate(text, count=count, modern=True, seed=seed, output_type=output_type)
 
 
 def previews_to_zip(previews: list[dict[str, Any]]) -> bytes:
@@ -91,7 +93,7 @@ def previews_to_zip(previews: list[dict[str, Any]]) -> bytes:
 
 
 st.title("Magic Write")
-st.caption("Generate styled transparent text previews and export Konva-compatible JSON.")
+st.caption("Generate styled transparent text previews and export Konva or Canva JSON.")
 
 if MODEL_IMPORT_ERROR is not None:
     st.error("The app could not load `magic_write`.")
@@ -101,6 +103,7 @@ if MODEL_IMPORT_ERROR is not None:
 with st.sidebar:
     st.header("Settings")
     count = st.number_input("Variations", min_value=0, value=12, step=1)
+    output_type = st.selectbox("JSON type", options=["konva", "canva"], index=0)
 
 count_too_high = int(count) > MAX_VARIATIONS
 if count_too_high:
@@ -122,6 +125,7 @@ if generate:
                     canvas_width=DEFAULT_CANVAS_WIDTH,
                     canvas_height=DEFAULT_CANVAS_HEIGHT,
                     seed=None,
+                    output_type=output_type,
                 )
             except Exception as exc:
                 st.error("Generation failed.")
@@ -135,7 +139,7 @@ if result:
     st.download_button(
         "Download JSON",
         data=json_bytes,
-        file_name="magic_write_output.json",
+        file_name=f"magic_write_{result.get('meta', {}).get('output_format', 'konva')}.json",
         mime="application/json",
     )
 

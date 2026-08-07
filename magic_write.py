@@ -3258,6 +3258,92 @@ def render_preview_data_uri(text_obj: dict[str, Any], canvas_width: int = DEFAUL
     return "data:image/png;base64," + base64.b64encode(out.getvalue()).decode("ascii")
 
 
+def _normalize_output_format(output_format: str | None = None, output_type: str | None = None) -> str:
+    normalized = str(output_format or output_type or "konva").strip().lower()
+    aliases = {
+        "konva": "konva",
+        "canvas": "konva",
+        "canva": "canva",
+    }
+    if normalized not in aliases:
+        raise ValueError("output format must be 'konva' or 'canva'")
+    return aliases[normalized]
+
+
+def _canva_text_element(text_obj: dict[str, Any], canvas_width: int, canvas_height: int) -> dict[str, Any]:
+    fill = _clean_hex(text_obj.get("fill"), "#111111")
+    stroke = _clean_hex(text_obj.get("stroke"), "")
+    shadow = _clean_hex(text_obj.get("shadowColor"), "")
+    return {
+        "id": f"canva_text_{uuid.uuid4()}",
+        "type": "TEXT",
+        "text": str(text_obj.get("text") or ""),
+        "position": {
+            "x": float(text_obj.get("x") or 0),
+            "y": float(text_obj.get("y") or 0),
+        },
+        "size": {
+            "width": float(text_obj.get("width") or 0),
+            "height": float(text_obj.get("height") or 0),
+        },
+        "transform": {
+            "scaleX": float(text_obj.get("scaleX") or 1),
+            "scaleY": float(text_obj.get("scaleY") or 1),
+            "rotation": float(text_obj.get("rotation") or 0),
+            "opacity": float(text_obj.get("opacity") or 1),
+        },
+        "style": {
+            "fontFamily": str(text_obj.get("fontFamily") or "Arial"),
+            "fontSize": float(text_obj.get("fontSize") or 36),
+            "fontWeight": str(text_obj.get("fontWeight") or "normal"),
+            "fontStyle": str(text_obj.get("fontStyle") or "normal"),
+            "color": fill,
+            "textAlign": str(text_obj.get("textAlign") or text_obj.get("align") or "center"),
+            "letterSpacing": float(text_obj.get("letterSpacing") or 0),
+            "lineHeight": float(text_obj.get("lineHeight") or 1),
+            "textDecoration": str(text_obj.get("textDecoration") or ""),
+        },
+        "effects": {
+            "stroke": {
+                "color": stroke,
+                "width": float(text_obj.get("strokeWidth") or 0) if stroke else 0,
+            },
+            "shadow": {
+                "color": shadow,
+                "blur": float(text_obj.get("shadowBlur") or 0) if shadow else 0,
+                "offsetX": float(text_obj.get("shadowOffsetX") or 0) if shadow else 0,
+                "offsetY": float(text_obj.get("shadowOffsetY") or 0) if shadow else 0,
+            },
+        },
+        "layer": {
+            "zIndex": int(text_obj.get("zIndex") or 0),
+            "draggable": bool(text_obj.get("draggable", True)),
+            "visible": True,
+        },
+        "canvas": {
+            "width": canvas_width,
+            "height": canvas_height,
+        },
+        "source": {
+            "format": "konva",
+            "type": str(text_obj.get("type") or "Text"),
+            "id": str(text_obj.get("id") or ""),
+            "magicWriteRole": str(text_obj.get("magicWriteRole") or ""),
+        },
+    }
+
+
+def _format_magic_write_objects(
+    objects: list[dict[str, Any]],
+    output_format: str,
+    canvas_width: int,
+    canvas_height: int,
+) -> list[dict[str, Any]]:
+    if output_format == "konva":
+        return objects
+    return [_canva_text_element(obj, canvas_width, canvas_height) for obj in objects]
+
+
 def generate_magic_write(
     text: str,
     count: int | None = 6,
@@ -3277,6 +3363,8 @@ def generate_magic_write(
     randomize_fonts: bool = True,
     randomize_designs: bool = True,
     seed: int | None = None,
+    output_format: str | None = None,
+    output_type: str | None = None,
 ) -> dict[str, Any]:
     text = str(text or "").strip()
     if not text:
@@ -3285,6 +3373,7 @@ def generate_magic_write(
     canvas_width = int(_clamp_number(canvas_width, DEFAULT_CANVAS_WIDTH, 160, 2000))
     canvas_height = int(_clamp_number(canvas_height, DEFAULT_CANVAS_HEIGHT, 160, 2000))
     model_name = LOCAL_MAGIC_WRITE_MODEL
+    normalized_output_format = _normalize_output_format(output_format, output_type)
     rng = _make_rng(seed)
 
     if requested_count == 0:
@@ -3302,6 +3391,7 @@ def generate_magic_write(
                 "randomize_fonts": randomize_fonts,
                 "randomize_designs": randomize_designs,
                 "seed": seed,
+                "output_format": normalized_output_format,
                 "google_font_sort": google_font_sort if all_google_fonts else None,
                 "google_font_category": google_font_category if all_google_fonts else None,
             },
@@ -3356,8 +3446,14 @@ def generate_magic_write(
         }
         for obj in objects
     ]
+    output_objects = _format_magic_write_objects(
+        objects,
+        normalized_output_format,
+        canvas_width,
+        canvas_height,
+    )
     return {
-        "magic_write": objects,
+        "magic_write": output_objects,
         "preview_image": previews,
         "meta": {
             "model": model_name,
@@ -3370,6 +3466,7 @@ def generate_magic_write(
             "randomize_fonts": randomize_fonts,
             "randomize_designs": randomize_designs,
             "seed": seed,
+            "output_format": normalized_output_format,
             "google_font_sort": google_font_sort if all_google_fonts else None,
             "google_font_category": google_font_category if all_google_fonts else None,
         },
