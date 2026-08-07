@@ -2088,6 +2088,300 @@ def _polish_export_text_shadow(text_obj: dict[str, Any]) -> dict[str, Any]:
     return obj
 
 
+MODERN_TEXT_EXPORT_STYLES: list[dict[str, Any]] = [
+    {
+        "name": "modern_coral_script_lift",
+        "fontFamily": "Dancing Script",
+        "fontSize": 74,
+        "fontWeight": "bold",
+        "fontStyle": "italic",
+        "fill": "#FF5D6C",
+        "stroke": "#FFF2E8",
+        "strokeWidth": 1.0,
+        "shadowColor": "#FF9CA8",
+        "shadowBlur": 0,
+        "shadowOffsetX": 2.2,
+        "shadowOffsetY": 3.0,
+        "letterSpacing": 0,
+        "lineHeight": 0.84,
+        "textTransform": "title",
+        "role": "main",
+    },
+    {
+        "name": "modern_gold_serif_emboss",
+        "fontFamily": "Playfair Display",
+        "fontSize": 66,
+        "fontWeight": "bold",
+        "fontStyle": "normal",
+        "fill": "#C99718",
+        "stroke": "#FFF7D8",
+        "strokeWidth": 0.9,
+        "shadowColor": "#9C771E",
+        "shadowBlur": 1.4,
+        "shadowOffsetX": 1.1,
+        "shadowOffsetY": 2.0,
+        "letterSpacing": 0.8,
+        "lineHeight": 0.9,
+        "textTransform": "upper",
+        "role": "main",
+    },
+    {
+        "name": "modern_pink_neon_condensed",
+        "fontFamily": "Bebas Neue",
+        "fontSize": 76,
+        "fontWeight": "bold",
+        "fontStyle": "normal",
+        "fill": "#FF4FB3",
+        "stroke": "#FF8AD7",
+        "strokeWidth": 1.0,
+        "shadowColor": "#FF4FB3",
+        "shadowBlur": 3.0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "letterSpacing": 0.9,
+        "lineHeight": 0.88,
+        "textTransform": "upper",
+        "role": "main",
+    },
+    {
+        "name": "modern_ink_clean_script",
+        "fontFamily": "Satisfy",
+        "fontSize": 76,
+        "fontWeight": "normal",
+        "fontStyle": "italic",
+        "fill": "#101114",
+        "stroke": "",
+        "strokeWidth": 0,
+        "shadowColor": "",
+        "shadowBlur": 0,
+        "shadowOffsetX": 0,
+        "shadowOffsetY": 0,
+        "letterSpacing": 0,
+        "lineHeight": 0.84,
+        "textTransform": "title",
+        "role": "main",
+    },
+    {
+        "name": "modern_teal_cutout_display",
+        "fontFamily": "League Spartan",
+        "fontSize": 68,
+        "fontWeight": "bold",
+        "fontStyle": "normal",
+        "fill": "#FFFFFF",
+        "stroke": "#139B83",
+        "strokeWidth": 2.0,
+        "shadowColor": "#0E6E5E",
+        "shadowBlur": 0,
+        "shadowOffsetX": 2.0,
+        "shadowOffsetY": 2.4,
+        "letterSpacing": 0.8,
+        "lineHeight": 0.9,
+        "textTransform": "title",
+        "role": "main",
+    },
+    {
+        "name": "modern_soft_red_slab",
+        "fontFamily": "Alfa Slab One",
+        "fontSize": 58,
+        "fontWeight": "normal",
+        "fontStyle": "normal",
+        "fill": "#FF4F61",
+        "stroke": "#FFFFFF",
+        "strokeWidth": 1.2,
+        "shadowColor": "#BFC6D1",
+        "shadowBlur": 0,
+        "shadowOffsetX": 2.0,
+        "shadowOffsetY": 2.6,
+        "letterSpacing": 0.5,
+        "lineHeight": 0.92,
+        "textTransform": "upper",
+        "role": "main",
+    },
+    {
+        "name": "modern_blue_editorial",
+        "fontFamily": "Montserrat",
+        "fontSize": 54,
+        "fontWeight": "bold",
+        "fontStyle": "normal",
+        "fill": "#1F5BFF",
+        "stroke": "",
+        "strokeWidth": 0,
+        "shadowColor": "#91B3FF",
+        "shadowBlur": 1.6,
+        "shadowOffsetX": 1.2,
+        "shadowOffsetY": 1.8,
+        "letterSpacing": 1.2,
+        "lineHeight": 0.96,
+        "textTransform": "title",
+        "role": "main",
+    },
+    {
+        "name": "modern_luxe_white_outline",
+        "fontFamily": "Cormorant Garamond",
+        "fontSize": 64,
+        "fontWeight": "bold",
+        "fontStyle": "normal",
+        "fill": "#FFFFFF",
+        "stroke": "#755CFF",
+        "strokeWidth": 1.6,
+        "shadowColor": "#BFB7FF",
+        "shadowBlur": 2.0,
+        "shadowOffsetX": 1.0,
+        "shadowOffsetY": 1.6,
+        "letterSpacing": 0.8,
+        "lineHeight": 0.9,
+        "textTransform": "upper",
+        "role": "main",
+    },
+]
+
+MODERN_TEXT_VARIANT_FONTS = {
+    "script": ["Dancing Script", "Pacifico", "Yellowtail", "Courgette", "Satisfy", "Allura", "Sacramento", "Great Vibes"],
+    "serif": ["Playfair Display", "Cormorant Garamond", "Prata", "Cinzel", "Merriweather", "DM Serif Display", "Abril Fatface"],
+    "display": ["Bebas Neue", "League Spartan", "Anton", "Oswald", "Archivo Black", "Righteous", "Alfa Slab One", "Fredoka One"],
+    "sans": ["Montserrat", "Poppins", "Aileron", "Public Sans", "Montserrat Alternates", "Nunito Sans"],
+}
+
+MODERN_TEXT_VARIANT_PALETTES = [
+    {"fill": "#101114", "stroke": "", "shadow": ""},
+    {"fill": "#FF5D6C", "stroke": "#FFF2E8", "shadow": "#FF9CA8"},
+    {"fill": "#C99718", "stroke": "#FFF7D8", "shadow": "#9C771E"},
+    {"fill": "#FF4FB3", "stroke": "#FF8AD7", "shadow": "#FF4FB3"},
+    {"fill": "#FFFFFF", "stroke": "#139B83", "shadow": "#0E6E5E"},
+    {"fill": "#1F5BFF", "stroke": "", "shadow": "#91B3FF"},
+    {"fill": "#2A2D34", "stroke": "#F9C74F", "shadow": "#00A896"},
+    {"fill": "#00A896", "stroke": "#FFFFFF", "shadow": "#0E6E5E"},
+    {"fill": "#755CFF", "stroke": "#FFFFFF", "shadow": "#BFB7FF"},
+    {"fill": "#E63946", "stroke": "#FFFFFF", "shadow": "#A8DADC"},
+    {"fill": "#FFFFFF", "stroke": "#FF4F61", "shadow": "#BFC6D1"},
+    {"fill": "#264653", "stroke": "#E9C46A", "shadow": "#7A2929"},
+]
+
+MODERN_TEXT_VARIANT_EFFECTS = [
+    {"name": "clean", "strokeWidth": 0, "shadowBlur": 0, "shadowOffsetX": 0, "shadowOffsetY": 0},
+    {"name": "tight_lift", "strokeWidth": 0.9, "shadowBlur": 0, "shadowOffsetX": 1.8, "shadowOffsetY": 2.4},
+    {"name": "soft_edge", "strokeWidth": 1.2, "shadowBlur": 1.6, "shadowOffsetX": 1.0, "shadowOffsetY": 1.6},
+    {"name": "cutout", "strokeWidth": 1.8, "shadowBlur": 0, "shadowOffsetX": 2.0, "shadowOffsetY": 2.4},
+    {"name": "neon_tight", "strokeWidth": 1.0, "shadowBlur": 3.0, "shadowOffsetX": 0, "shadowOffsetY": 0},
+    {"name": "emboss", "strokeWidth": 0.8, "shadowBlur": 1.2, "shadowOffsetX": 1.2, "shadowOffsetY": 2.0},
+]
+
+
+def _modern_text_style_for_index(index: int) -> dict[str, Any]:
+    base_count = len(MODERN_TEXT_EXPORT_STYLES)
+    base_index = index % base_count
+    style = deepcopy(MODERN_TEXT_EXPORT_STYLES[base_index])
+    cycle = index // base_count
+    if cycle == 0:
+        return style
+
+    kind = _font_kind(str(style.get("fontFamily") or ""))
+    font_pool = MODERN_TEXT_VARIANT_FONTS.get(kind) or MODERN_TEXT_VARIANT_FONTS["sans"]
+    original_fill = _clean_hex(style.get("fill"), "")
+    original_stroke = _clean_hex(style.get("stroke"), "")
+    palette_index = (cycle * 7 + base_index * 3) % len(MODERN_TEXT_VARIANT_PALETTES)
+    for offset in range(len(MODERN_TEXT_VARIANT_PALETTES)):
+        palette = MODERN_TEXT_VARIANT_PALETTES[(palette_index + offset) % len(MODERN_TEXT_VARIANT_PALETTES)]
+        if palette["fill"] != original_fill and palette["stroke"] != original_stroke:
+            break
+    effect = MODERN_TEXT_VARIANT_EFFECTS[(cycle * 2 + base_index) % len(MODERN_TEXT_VARIANT_EFFECTS)]
+
+    style["name"] = f"{style.get('name', 'modern_text')}_{effect['name']}_{cycle}"
+    style["fontFamily"] = font_pool[(cycle * 3 + base_index + 1) % len(font_pool)]
+    style["fill"] = palette["fill"]
+    style["stroke"] = palette["stroke"] if effect["strokeWidth"] else ""
+    style["strokeWidth"] = float(effect["strokeWidth"]) if style["stroke"] else 0
+    style["shadowColor"] = palette["shadow"] if effect["shadowBlur"] or effect["shadowOffsetX"] or effect["shadowOffsetY"] else ""
+    style["shadowBlur"] = float(effect["shadowBlur"]) if style["shadowColor"] else 0
+    style["shadowOffsetX"] = float(effect["shadowOffsetX"]) if style["shadowColor"] else 0
+    style["shadowOffsetY"] = float(effect["shadowOffsetY"]) if style["shadowColor"] else 0
+    style["fontSize"] = _clamp_number(float(style.get("fontSize") or 60) * (0.9 + (cycle % 5) * 0.035), 60, 38, 86)
+    style["letterSpacing"] = _clamp_number(float(style.get("letterSpacing") or 0) + ((cycle + index) % 5) * 0.28, 0, -0.5, 2.4)
+    style["textTransform"] = "upper" if (cycle + index) % 3 == 0 else style.get("textTransform", "title")
+    if _font_kind(str(style["fontFamily"])) == "script":
+        style["fontStyle"] = "italic"
+        style["fontWeight"] = "normal" if (cycle + index) % 2 else "bold"
+        style["letterSpacing"] = min(float(style["letterSpacing"]), 0.6)
+    else:
+        style["fontStyle"] = "normal"
+        style["fontWeight"] = "bold" if _font_kind(str(style["fontFamily"])) in {"display", "sans"} else style.get("fontWeight", "bold")
+    return style
+
+
+def _modern_text_signature(obj: dict[str, Any]) -> tuple[Any, ...]:
+    return (
+        str(obj.get("text") or ""),
+        str(obj.get("fontFamily") or ""),
+        str(obj.get("fontWeight") or ""),
+        str(obj.get("fontStyle") or ""),
+        str(obj.get("fill") or ""),
+        str(obj.get("stroke") or ""),
+        round(float(obj.get("strokeWidth") or 0), 2),
+        str(obj.get("shadowColor") or ""),
+        round(float(obj.get("shadowBlur") or 0), 2),
+        round(float(obj.get("shadowOffsetX") or 0), 2),
+        round(float(obj.get("shadowOffsetY") or 0), 2),
+        round(float(obj.get("letterSpacing") or 0), 2),
+    )
+
+
+def _modern_text_visual_family(obj: dict[str, Any]) -> tuple[Any, ...]:
+    colors = sorted(
+        color
+        for color in (
+            _clean_hex(obj.get("fill"), ""),
+            _clean_hex(obj.get("stroke"), ""),
+            _clean_hex(obj.get("shadowColor"), ""),
+        )
+        if color
+    )
+    return (
+        str(obj.get("text") or ""),
+        _font_kind(str(obj.get("fontFamily") or "")),
+        tuple(colors[:2]),
+        bool(float(obj.get("strokeWidth") or 0) > 0),
+        "glow" if float(obj.get("shadowBlur") or 0) > 1.5 else "offset" if abs(float(obj.get("shadowOffsetX") or 0)) + abs(float(obj.get("shadowOffsetY") or 0)) > 0 else "clean",
+    )
+
+
+def _modern_text_objects(
+    text: str,
+    count: int | None,
+    canvas_width: int,
+    canvas_height: int,
+) -> list[dict[str, Any]]:
+    requested = count or len(MODERN_TEXT_EXPORT_STYLES)
+    objects: list[dict[str, Any]] = []
+    used_signatures: set[tuple[Any, ...]] = set()
+    used_visual_families: set[tuple[Any, ...]] = set()
+    candidate_index = 0
+    while len(objects) < requested and candidate_index < requested * 12 + 96:
+        style = _modern_text_style_for_index(candidate_index)
+        styled_text = _apply_text_transform(text, style.get("textTransform"))
+        obj = _layer_text(
+            styled_text,
+            style,
+            z_index=len(objects) + 1,
+            x=canvas_width * 0.08,
+            y=canvas_height * 0.36,
+            width=canvas_width * 0.84,
+            height=canvas_height * 0.24,
+        )
+        obj = _polish_export_text_shadow(obj)
+        obj = _fit_export_text_object_to_canvas(obj, canvas_width, canvas_height)
+        signature = _modern_text_signature(obj)
+        candidate_index += 1
+        if signature in used_signatures:
+            continue
+        visual_family = _modern_text_visual_family(obj)
+        if visual_family in used_visual_families:
+            continue
+        used_signatures.add(signature)
+        used_visual_families.add(visual_family)
+        objects.append(obj)
+    return objects
+
+
 def _fit_export_text_object_to_canvas(
     text_obj: dict[str, Any],
     canvas_width: int,
@@ -3431,13 +3725,11 @@ def generate_magic_write(
         }
 
     if modern:
-        objects = _modern_composition_groups(
+        objects = _modern_text_objects(
             text,
             requested_count,
-            rng=rng,
             canvas_width=canvas_width,
             canvas_height=canvas_height,
-            randomize_designs=randomize_designs,
         )
     elif all_google_fonts:
         google_families = fetch_google_font_families(
