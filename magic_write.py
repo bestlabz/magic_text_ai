@@ -3333,15 +3333,48 @@ def _canva_text_element(text_obj: dict[str, Any], canvas_width: int, canvas_heig
     }
 
 
+def _konva_text_export_object(obj: dict[str, Any]) -> dict[str, Any] | None:
+    if obj.get("type") == "Text":
+        return deepcopy(obj)
+    children = obj.get("children")
+    if not isinstance(children, list):
+        return None
+    text_children = [
+        child
+        for child in children
+        if isinstance(child, dict) and child.get("type") == "Text"
+    ]
+    if not text_children:
+        return None
+    selected = next(
+        (child for child in text_children if str(child.get("magicWriteRole") or "") == "main"),
+        max(text_children, key=lambda child: float(child.get("fontSize") or 0)),
+    )
+    text_obj = deepcopy(selected)
+    text_obj["x"] = float(obj.get("x") or 0) + float(text_obj.get("x") or 0)
+    text_obj["y"] = float(obj.get("y") or 0) + float(text_obj.get("y") or 0)
+    text_obj["zIndex"] = int(obj.get("zIndex") or text_obj.get("zIndex") or 0)
+    text_obj["draggable"] = True
+    text_obj["listening"] = True
+    return text_obj
+
+
 def _format_magic_write_objects(
     objects: list[dict[str, Any]],
     output_format: str,
     canvas_width: int,
     canvas_height: int,
 ) -> list[dict[str, Any]]:
+    konva_objects = [
+        text_obj
+        for obj in objects
+        if isinstance(obj, dict)
+        for text_obj in [_konva_text_export_object(obj)]
+        if text_obj is not None
+    ]
     if output_format == "konva":
-        return objects
-    return [_canva_text_element(obj, canvas_width, canvas_height) for obj in objects]
+        return konva_objects
+    return [_canva_text_element(obj, canvas_width, canvas_height) for obj in konva_objects]
 
 
 def generate_magic_write(

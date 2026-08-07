@@ -126,17 +126,47 @@ def canva_text_element(text_obj: dict[str, Any], canvas_width: int, canvas_heigh
     }
 
 
+def konva_text_object(obj: dict[str, Any]) -> dict[str, Any] | None:
+    if obj.get("type") == "Text":
+        return dict(obj)
+    children = obj.get("children")
+    if not isinstance(children, list):
+        return None
+    text_children = [child for child in children if isinstance(child, dict) and child.get("type") == "Text"]
+    if not text_children:
+        return None
+    selected = next(
+        (child for child in text_children if str(child.get("magicWriteRole") or "") == "main"),
+        max(text_children, key=lambda child: float(child.get("fontSize") or 0)),
+    )
+    text_obj = dict(selected)
+    text_obj["x"] = float(obj.get("x") or 0) + float(text_obj.get("x") or 0)
+    text_obj["y"] = float(obj.get("y") or 0) + float(text_obj.get("y") or 0)
+    text_obj["zIndex"] = int(obj.get("zIndex") or text_obj.get("zIndex") or 0)
+    text_obj["draggable"] = True
+    text_obj["listening"] = True
+    return text_obj
+
+
 def convert_result_format(result: dict[str, Any], output_type: str, canvas_width: int, canvas_height: int) -> dict[str, Any]:
     converted = dict(result)
     meta = dict(converted.get("meta") or {})
     meta["output_format"] = output_type
     converted["meta"] = meta
+    konva_objects = [
+        text_obj
+        for obj in converted.get("magic_write") or []
+        if isinstance(obj, dict)
+        for text_obj in [konva_text_object(obj)]
+        if text_obj is not None
+    ]
     if output_type == "canva":
         converted["magic_write"] = [
             canva_text_element(obj, canvas_width, canvas_height)
-            for obj in converted.get("magic_write") or []
-            if isinstance(obj, dict)
+            for obj in konva_objects
         ]
+    else:
+        converted["magic_write"] = konva_objects
     return converted
 
 
@@ -163,13 +193,13 @@ def generate_magic_text(
         }
     model = get_model(canvas_width, canvas_height)
     try:
-        return model.generate(text, count=count, modern=True, seed=seed, output_type=output_type)
+        result = model.generate(text, count=count, modern=True, seed=seed, output_type=output_type)
     except TypeError as exc:
         message = str(exc)
         if "output_type" not in message and "output_format" not in message:
             raise
         result = model.generate(text, count=count, modern=True, seed=seed)
-        return convert_result_format(result, output_type, canvas_width, canvas_height)
+    return convert_result_format(result, output_type, canvas_width, canvas_height)
 
 
 def previews_to_zip(previews: list[dict[str, Any]]) -> bytes:
