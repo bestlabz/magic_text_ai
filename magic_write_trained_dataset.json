@@ -866,6 +866,14 @@
   ],
   "modern_composition_templates": [
     {
+      "name": "modern_comp_happy_birthday",
+      "kind": "happy_birthday"
+    },
+    {
+      "name": "modern_comp_golden_hour",
+      "kind": "golden_hour"
+    },
+    {
       "name": "modern_comp_light_script",
       "kind": "light_script"
     },
@@ -878,20 +886,20 @@
       "kind": "thank_you"
     },
     {
-      "name": "modern_comp_bride_groom",
-      "kind": "bride_groom"
+      "name": "modern_comp_luxury_names",
+      "kind": "luxury_names"
     },
     {
-      "name": "modern_comp_happy_birthday",
-      "kind": "happy_birthday"
-    },
-    {
-      "name": "modern_comp_golden_hour",
-      "kind": "golden_hour"
+      "name": "modern_comp_editorial_caps",
+      "kind": "editorial_caps"
     },
     {
       "name": "modern_comp_script_club",
       "kind": "script_club"
+    },
+    {
+      "name": "modern_comp_bride_groom",
+      "kind": "bride_groom"
     },
     {
       "name": "modern_comp_xoxo",
@@ -914,19 +922,65 @@
       "kind": "quarter_roadmap"
     },
     {
-      "name": "modern_comp_luxury_names",
-      "kind": "luxury_names"
-    },
-    {
       "name": "modern_comp_neon_open",
       "kind": "neon_open"
-    },
-    {
-      "name": "modern_comp_editorial_caps",
-      "kind": "editorial_caps"
     }
   ],
   "modern_composition_palettes": [
+    {
+      "name": "modern_ink_coral",
+      "primary": "#101114",
+      "secondary": "#FF4F61",
+      "accent": "#FFE6DD",
+      "light": "#FFFFFF",
+      "shadow": "#BFC6D1",
+      "glow": "#FF8C98"
+    },
+    {
+      "name": "modern_gold_luxe",
+      "primary": "#C99718",
+      "secondary": "#5D4714",
+      "accent": "#F5D66B",
+      "light": "#FFF7D8",
+      "shadow": "#9C771E",
+      "glow": "#FFE58A"
+    },
+    {
+      "name": "modern_candy_pop",
+      "primary": "#FF6874",
+      "secondary": "#FFF0DC",
+      "accent": "#FFB0A8",
+      "light": "#FFFFFF",
+      "shadow": "#FF7E8D",
+      "glow": "#FFA9B8"
+    },
+    {
+      "name": "modern_soft_rose",
+      "primary": "#B8BEC9",
+      "secondary": "#FF4D60",
+      "accent": "#FFFFFF",
+      "light": "#FFFFFF",
+      "shadow": "#FF596A",
+      "glow": "#FFB4BF"
+    },
+    {
+      "name": "modern_neon_pink",
+      "primary": "#FF4FB3",
+      "secondary": "#FF8AD7",
+      "accent": "#FFFFFF",
+      "light": "#FFEAF7",
+      "shadow": "#C52783",
+      "glow": "#FF7BCF"
+    },
+    {
+      "name": "modern_teal_cutout",
+      "primary": "#139B83",
+      "secondary": "#FFFFFF",
+      "accent": "#DDFCF5",
+      "light": "#FFFFFF",
+      "shadow": "#0E6E5E",
+      "glow": "#91FFE9"
+    },
     {
       "name": "ruby_mint",
       "primary": "#EF3F4F",
@@ -1109,6 +1163,66 @@
     }
   ],
   "modern_composition_effects": [
+    {
+      "name": "clean_display",
+      "strokeWidth": 0,
+      "shadowBlur": 0,
+      "shadowOffsetX": 0,
+      "shadowOffsetY": 0,
+      "fillMode": "primary",
+      "strokeMode": "",
+      "shadowMode": ""
+    },
+    {
+      "name": "gold_emboss",
+      "strokeWidth": 0,
+      "shadowBlur": 1.3,
+      "shadowOffsetX": 1.0,
+      "shadowOffsetY": 2.4,
+      "fillMode": "primary",
+      "strokeMode": "",
+      "shadowMode": "shadow"
+    },
+    {
+      "name": "candy_lift",
+      "strokeWidth": 1.0,
+      "shadowBlur": 0,
+      "shadowOffsetX": 3.2,
+      "shadowOffsetY": 3.8,
+      "fillMode": "light",
+      "strokeMode": "primary",
+      "shadowMode": "primary"
+    },
+    {
+      "name": "soft_marker",
+      "strokeWidth": 0,
+      "shadowBlur": 0,
+      "shadowOffsetX": 2.8,
+      "shadowOffsetY": 3.4,
+      "fillMode": "primary",
+      "strokeMode": "",
+      "shadowMode": "secondary"
+    },
+    {
+      "name": "pink_neon_bloom",
+      "strokeWidth": 1.1,
+      "shadowBlur": 17,
+      "shadowOffsetX": 0,
+      "shadowOffsetY": 0,
+      "fillMode": "primary",
+      "strokeMode": "secondary",
+      "shadowMode": "glow"
+    },
+    {
+      "name": "teal_cutout",
+      "strokeWidth": 1.8,
+      "shadowBlur": 0,
+      "shadowOffsetX": 1.8,
+      "shadowOffsetY": 2.2,
+      "fillMode": "light",
+      "strokeMode": "primary",
+      "shadowMode": "shadow"
+    },
     {
       "name": "solid",
       "strokeWidth": 0,

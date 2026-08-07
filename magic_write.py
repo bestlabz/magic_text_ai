@@ -240,6 +240,12 @@ DESIGN_EFFECTS = [
 ]
 
 MODERN_COMPOSITION_PALETTES = [
+    {"name": "modern_ink_coral", "primary": "#101114", "secondary": "#FF4F61", "accent": "#FFE6DD", "light": "#FFFFFF", "shadow": "#BFC6D1", "glow": "#FF8C98"},
+    {"name": "modern_gold_luxe", "primary": "#C99718", "secondary": "#5D4714", "accent": "#F5D66B", "light": "#FFF7D8", "shadow": "#9C771E", "glow": "#FFE58A"},
+    {"name": "modern_candy_pop", "primary": "#FF6874", "secondary": "#FFF0DC", "accent": "#FFB0A8", "light": "#FFFFFF", "shadow": "#FF7E8D", "glow": "#FFA9B8"},
+    {"name": "modern_soft_rose", "primary": "#B8BEC9", "secondary": "#FF4D60", "accent": "#FFFFFF", "light": "#FFFFFF", "shadow": "#FF596A", "glow": "#FFB4BF"},
+    {"name": "modern_neon_pink", "primary": "#FF4FB3", "secondary": "#FF8AD7", "accent": "#FFFFFF", "light": "#FFEAF7", "shadow": "#C52783", "glow": "#FF7BCF"},
+    {"name": "modern_teal_cutout", "primary": "#139B83", "secondary": "#FFFFFF", "accent": "#DDFCF5", "light": "#FFFFFF", "shadow": "#0E6E5E", "glow": "#91FFE9"},
     {"name": "ruby_mint", "primary": "#EF3F4F", "secondary": "#199B72", "accent": "#F6B7D8", "light": "#FFFFFF", "shadow": "#197C68", "glow": "#F89BB7"},
     {"name": "royal_gold", "primary": "#D6A816", "secondary": "#1E3158", "accent": "#F3D46B", "light": "#FFF8DB", "shadow": "#A3832C", "glow": "#FFE083"},
     {"name": "aqua_orange", "primary": "#20A9D6", "secondary": "#FF7A21", "accent": "#FFE2A8", "light": "#FFFFFF", "shadow": "#137897", "glow": "#7EE6FF"},
@@ -263,6 +269,12 @@ MODERN_COMPOSITION_PALETTES = [
 ]
 
 MODERN_COMPOSITION_EFFECTS = [
+    {"name": "clean_display", "strokeWidth": 0, "shadowBlur": 0, "shadowOffsetX": 0, "shadowOffsetY": 0, "fillMode": "primary", "strokeMode": "", "shadowMode": ""},
+    {"name": "gold_emboss", "strokeWidth": 0, "shadowBlur": 1.3, "shadowOffsetX": 1.0, "shadowOffsetY": 2.4, "fillMode": "primary", "strokeMode": "", "shadowMode": "shadow"},
+    {"name": "candy_lift", "strokeWidth": 1.0, "shadowBlur": 0, "shadowOffsetX": 3.2, "shadowOffsetY": 3.8, "fillMode": "light", "strokeMode": "primary", "shadowMode": "primary"},
+    {"name": "soft_marker", "strokeWidth": 0, "shadowBlur": 0, "shadowOffsetX": 2.8, "shadowOffsetY": 3.4, "fillMode": "primary", "strokeMode": "", "shadowMode": "secondary"},
+    {"name": "pink_neon_bloom", "strokeWidth": 1.1, "shadowBlur": 17, "shadowOffsetX": 0, "shadowOffsetY": 0, "fillMode": "primary", "strokeMode": "secondary", "shadowMode": "glow"},
+    {"name": "teal_cutout", "strokeWidth": 1.8, "shadowBlur": 0, "shadowOffsetX": 1.8, "shadowOffsetY": 2.2, "fillMode": "light", "strokeMode": "primary", "shadowMode": "shadow"},
     {"name": "solid", "strokeWidth": 0, "shadowBlur": 0, "shadowOffsetX": 0, "shadowOffsetY": 0, "fillMode": "primary", "strokeMode": "", "shadowMode": ""},
     {"name": "outline_pop", "strokeWidth": 2.3, "shadowBlur": 0, "shadowOffsetX": 2.2, "shadowOffsetY": 2.8, "fillMode": "light", "strokeMode": "secondary", "shadowMode": "accent"},
     {"name": "glow_tube", "strokeWidth": 1.4, "shadowBlur": 17, "shadowOffsetX": 0, "shadowOffsetY": 0, "fillMode": "light", "strokeMode": "accent", "shadowMode": "glow"},
@@ -283,6 +295,15 @@ MODERN_COMPOSITION_EFFECTS = [
     {"name": "mist_glow", "strokeWidth": 0, "shadowBlur": 14.0, "shadowOffsetX": 0, "shadowOffsetY": 0, "fillMode": "primary", "strokeMode": "", "shadowMode": "glow"},
     {"name": "accent_edge", "strokeWidth": 1.9, "shadowBlur": 0, "shadowOffsetX": 1.0, "shadowOffsetY": 3.5, "fillMode": "secondary", "strokeMode": "accent", "shadowMode": "primary"},
     {"name": "quiet_luxe", "strokeWidth": 0.4, "shadowBlur": 1.6, "shadowOffsetX": 0.8, "shadowOffsetY": 1.8, "fillMode": "primary", "strokeMode": "light", "shadowMode": "shadow"},
+]
+
+MODERN_FEATURED_DESIGN_SEQUENCE = [
+    ("modern_ink_coral", "clean_display"),
+    ("modern_gold_luxe", "gold_emboss"),
+    ("modern_candy_pop", "soft_marker"),
+    ("modern_neon_pink", "pink_neon_bloom"),
+    ("modern_soft_rose", "soft_marker"),
+    ("modern_teal_cutout", "teal_cutout"),
 ]
 
 
@@ -1077,21 +1098,21 @@ MODERN_MAGIC_WRITE_DATASET: list[dict[str, Any]] = [
 ]
 
 MODERN_COMPOSITION_TEMPLATES: list[dict[str, Any]] = [
+    {"name": "modern_comp_happy_birthday", "kind": "happy_birthday"},
+    {"name": "modern_comp_golden_hour", "kind": "golden_hour"},
     {"name": "modern_comp_light_script", "kind": "light_script"},
     {"name": "modern_comp_neon_glow", "kind": "neon_glow"},
     {"name": "modern_comp_thank_you", "kind": "thank_you"},
-    {"name": "modern_comp_bride_groom", "kind": "bride_groom"},
-    {"name": "modern_comp_happy_birthday", "kind": "happy_birthday"},
-    {"name": "modern_comp_golden_hour", "kind": "golden_hour"},
+    {"name": "modern_comp_luxury_names", "kind": "luxury_names"},
+    {"name": "modern_comp_editorial_caps", "kind": "editorial_caps"},
     {"name": "modern_comp_script_club", "kind": "script_club"},
+    {"name": "modern_comp_bride_groom", "kind": "bride_groom"},
     {"name": "modern_comp_xoxo", "kind": "xoxo"},
     {"name": "modern_comp_studio_badge", "kind": "studio_badge"},
     {"name": "modern_comp_streaming_now", "kind": "streaming_now"},
     {"name": "modern_comp_quarterly_targets", "kind": "quarterly_targets"},
     {"name": "modern_comp_quarter_roadmap", "kind": "quarter_roadmap"},
-    {"name": "modern_comp_luxury_names", "kind": "luxury_names"},
     {"name": "modern_comp_neon_open", "kind": "neon_open"},
-    {"name": "modern_comp_editorial_caps", "kind": "editorial_caps"},
 ]
 
 
@@ -2203,12 +2224,7 @@ def _strengthen_transparent_text_contrast(children: list[dict[str, Any]]) -> lis
 
         luminance = _hex_luminance(fill)
         if luminance < 0.28:
-            child["stroke"] = "#FFFFFF"
-            child["strokeWidth"] = max(stroke_width, 1.4)
-            child["shadowColor"] = "#FFFFFF"
-            child["shadowBlur"] = max(shadow_blur, 3.5)
-            child["shadowOffsetX"] = 0
-            child["shadowOffsetY"] = 0
+            continue
         elif luminance > 0.82:
             child["stroke"] = "#1F2937"
             child["strokeWidth"] = max(stroke_width, 0.9)
@@ -2335,6 +2351,22 @@ def _modern_design_choices(
     used_palettes: set[str],
     used_effects: set[str],
 ) -> tuple[dict[str, str], dict[str, Any]]:
+    palettes_by_name = {str(palette["name"]): palette for palette in MODERN_COMPOSITION_PALETTES}
+    effects_by_name = {str(effect["name"]): effect for effect in MODERN_COMPOSITION_EFFECTS}
+    featured = [
+        (palettes_by_name[palette_name], effects_by_name[effect_name])
+        for palette_name, effect_name in MODERN_FEATURED_DESIGN_SEQUENCE
+        if palette_name in palettes_by_name and effect_name in effects_by_name
+    ]
+    for offset in range(len(featured)):
+        palette, effect = featured[(index + offset) % len(featured)]
+        signature = (str(palette["name"]), str(effect["name"]))
+        if signature not in used_designs:
+            used_designs.add(signature)
+            used_palettes.add(str(palette["name"]))
+            used_effects.add(str(effect["name"]))
+            return palette, effect
+
     palettes = _shuffle_copy(MODERN_COMPOSITION_PALETTES, rng) if randomize_designs else MODERN_COMPOSITION_PALETTES[:]
     effects = _shuffle_copy(MODERN_COMPOSITION_EFFECTS, rng) if randomize_designs else MODERN_COMPOSITION_EFFECTS[:]
     palette_pool = [palette for palette in palettes if str(palette["name"]) not in used_palettes] or palettes
@@ -2419,7 +2451,7 @@ def _apply_modern_composition_design(
         else:
             child["letterSpacing"] = max(float(child.get("letterSpacing") or 0), (index % 4) * 0.25)
 
-        if kind in {"light_script", "neon_glow", "neon_open"}:
+        if kind in {"light_script", "neon_glow", "neon_open"} and effect_name in {"glow_tube", "warm_neon"}:
             child["fill"] = _modern_palette_value(palette, "light") or "#FFFFFF"
             child["stroke"] = _modern_palette_value(palette, "accent") or child["stroke"]
             child["strokeWidth"] = max(float(child.get("strokeWidth") or 0), 1.1)
@@ -2625,7 +2657,11 @@ def _modern_composition_groups(
     canvas_height: int,
     randomize_designs: bool = True,
 ) -> list[dict[str, Any]]:
-    templates = _shuffle_copy(MODERN_COMPOSITION_TEMPLATES, rng)
+    templates = MODERN_COMPOSITION_TEMPLATES[:]
+    template_order = {
+        str(template.get("kind") or template.get("name") or ""): position
+        for position, template in enumerate(MODERN_COMPOSITION_TEMPLATES)
+    }
     normalized = text.lower()
 
     def score(template: dict[str, Any]) -> int:
@@ -2648,7 +2684,7 @@ def _modern_composition_groups(
         }
         return sum(1 for token in checks.get(kind, ()) if token in normalized)
 
-    templates.sort(key=score, reverse=True)
+    templates.sort(key=lambda template: (-score(template), template_order.get(str(template.get("kind") or ""), 999)))
     requested = count or len(templates)
     groups = []
     used_fonts: set[str] = set()
